@@ -127,8 +127,8 @@ class CPU:
         self.pc += 3
 
     def prn(self):
-        operand_a = self.reg[self.pc + 1]
-        print(self.reg[operand_a])
+        opperand_a = self.ram[self.pc + 1]
+        print(self.reg[opperand_a])
         self.pc += 2
 
     def mul(self):
