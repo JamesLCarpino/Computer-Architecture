@@ -5,6 +5,7 @@ import sys
 HLT = 0b00000001
 LDI = 0b10000010
 PRN = 0b01000111
+MUL = 0b10100010
 
 
 class CPU:
@@ -34,7 +35,7 @@ class CPU:
                     try:
                         line = line.strip()
                         line = line.split("#", 1)[0]
-                        line = int(line, 10)
+                        line = int(line, 2)  # base 2 because its binary
                         self.ram[address] = line
                         address += 1
                     except ValueError:
@@ -64,6 +65,7 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
+        elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
         # elif op == "SUB": etc
         else:
@@ -129,6 +131,12 @@ class CPU:
         print(self.reg[operand_a])
         self.pc += 2
 
+    def mul(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("MUL", operand_a, operand_b)
+        self.pc += 3
+
     def run(self):
         """Run the CPU."""
         self.running = True
@@ -145,4 +153,6 @@ class CPU:
                 self.hlt()
             elif inst == PRN:
                 self.prn()
+            elif inst == MUL:
+                self.mul()
 
