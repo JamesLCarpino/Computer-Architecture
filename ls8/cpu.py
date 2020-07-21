@@ -6,6 +6,7 @@ HLT = 0b00000001
 LDI = 0b10000010
 PRN = 0b01000111
 MUL = 0b10100010
+PUSH = 0b01000101
 
 
 class CPU:
@@ -19,13 +20,17 @@ class CPU:
         self.reg = [0] * 8
         # internal register counter
         self.pc = 0
+
         # later will set the initial value of the stack pointer
+        self.sp = 0
         # branch table attampt
         self.branchtable = {}
         self.branchtable[HLT] = self.hlt
         self.branchtable[LDI] = self.ldi
         self.branchtable[PRN] = self.prn
         self.branchtable[MUL] = self.mul
+        self.branchtable[PUSH] = self.push
+        self.branchtable[POP] = self.pop
 
     def load(self):
         """Load a program into memory."""
@@ -142,6 +147,20 @@ class CPU:
         operand_b = self.ram[self.pc + 2]
         self.alu("MUL", operand_a, operand_b)
         self.pc += 3
+
+    def push(self):
+        pass
+        # decrement the stack pointer
+        # copy the value in the given register to the address pointed to by the sp
+        #
+
+        self.sp += 1
+
+    def pop(self):
+        pass
+        # copy the value from the address point to by the sp
+        # increment the sp
+        self.sp -= 1
 
     def run(self):
         """Run the CPU."""
