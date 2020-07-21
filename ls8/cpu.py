@@ -20,6 +20,12 @@ class CPU:
         # internal register counter
         self.pc = 0
         # later will set the initial value of the stack pointer
+        # branch table attampt
+        self.branchtable = {}
+        self.branchtable[HLT] = self.hlt
+        self.branchtable[LDI] = self.ldi
+        self.branchtable[PRN] = self.prn
+        self.branchtable[MUL] = self.mul
 
     def load(self):
         """Load a program into memory."""
@@ -146,13 +152,14 @@ class CPU:
 
             ir = self.pc
             inst = self.ram[ir]
+            self.branchtable[inst]()
             # if else chain to deal with the program
-            if inst == LDI:
-                self.ldi()
-            elif inst == HLT:
-                self.hlt()
-            elif inst == PRN:
-                self.prn()
-            elif inst == MUL:
-                self.mul()
+            # if inst == LDI:
+            #     self.ldi()
+            # elif inst == HLT:
+            #     self.hlt()
+            # elif inst == PRN:
+            #     self.prn()
+            # elif inst == MUL:
+            #     self.mul()
 
