@@ -7,6 +7,7 @@ LDI = 0b10000010
 PRN = 0b01000111
 MUL = 0b10100010
 PUSH = 0b01000101
+POP = 0b01000110
 
 
 class CPU:
@@ -22,7 +23,7 @@ class CPU:
         self.pc = 0
 
         # later will set the initial value of the stack pointer
-        self.sp = 0
+        self.sp = 7
         # branch table attampt
         self.branchtable = {}
         self.branchtable[HLT] = self.hlt
@@ -36,9 +37,9 @@ class CPU:
         """Load a program into memory."""
 
         address = 0
-        # if len(sys.argv) != 2:
-        #     print("usage: comp.py filename")
-        #     sys.exit(1)
+        if len(sys.argv) != 2:
+            print("usage: comp.py filename")
+            sys.exit(1)
 
         try:
             with open(sys.argv[1]) as f:
@@ -132,10 +133,13 @@ class CPU:
         # 0b10000010,  # LDI R0,8 128->dec
 
         # sets a specific register to a specified value
+        # print("LDI")
+        # self.trace()
         operand_a = self.ram[self.pc + 1]
         operand_b = self.ram[self.pc + 2]
         self.reg[operand_a] = operand_b
         self.pc += 3
+        # self.trace()
 
     def prn(self):
         opperand_a = self.ram[self.pc + 1]
@@ -149,18 +153,36 @@ class CPU:
         self.pc += 3
 
     def push(self):
-        pass
-        # decrement the stack pointer
-        # copy the value in the given register to the address pointed to by the sp
-        #
+        # print("pushing")
+        # self.trace()
+        # decrement the stack pointer\
+        self.reg[self.sp] -= 1
 
-        self.sp += 1
+        reg_num = self.ram[self.pc + 1]
+        value = self.reg[reg_num]
+        # print(value)
+        address_to_push_to = self.reg[self.sp]
+        self.ram[address_to_push_to] = value
+
+        self.pc += 2
+        # copy the value in the given register to the address pointed to by the sp
+        # self.trace()
 
     def pop(self):
-        pass
+        # print("popping")
+        # pop into registers, pop whatever is at top of stack to R0
         # copy the value from the address point to by the sp
         # increment the sp
-        self.sp -= 1
+        # self.trace()
+        address_to_pop_from = self.reg[self.sp]
+        value = self.ram[address_to_pop_from]
+
+        reg_num = self.ram[self.pc + 1]
+        self.reg[reg_num] = value
+
+        self.reg[self.sp] += 1
+        self.pc += 2
+        # self.trace()
 
     def run(self):
         """Run the CPU."""
