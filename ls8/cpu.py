@@ -8,6 +8,8 @@ PRN = 0b01000111
 MUL = 0b10100010
 PUSH = 0b01000101
 POP = 0b01000110
+CALL = 0b01010000
+RET = 0b00010001
 
 
 class CPU:
@@ -32,6 +34,8 @@ class CPU:
         self.branchtable[MUL] = self.mul
         self.branchtable[PUSH] = self.push
         self.branchtable[POP] = self.pop
+        self.branchtable[CALL] = self.call
+        self.branchtable[RET] = self.ret
 
     def load(self):
         """Load a program into memory."""
@@ -183,6 +187,33 @@ class CPU:
         self.reg[self.sp] += 1
         self.pc += 2
         # self.trace()
+
+    def call(self):
+        # get the address of the next instruction
+        print("CALL:")
+        self.trace()
+        return_address = self.pc + 2
+        # push that onto the stack
+        self.reg[self.sp] -= 1
+        address_to_push_to = self.reg[self.sp]
+        self.ram[address_to_push_to] = return_address
+
+        # set the PC to the subroutine address
+        register_number = self.ram[self.pc + 1]
+        subroutine_address = self.reg[register_number]
+
+        self.pc = subroutine_address
+        print("endCALL")
+        self.trace()
+
+    def ret(self):
+        # get return address from the top of the stack
+        address_to_pop_from = self.reg[self.sp]
+        return_address = self.ram[address_to_pop_from]
+        self.reg[self.sp] += 1
+
+        # set the PC to the return addresss
+        self.pc = return_address
 
     def run(self):
         """Run the CPU."""
