@@ -208,6 +208,8 @@ class CPU:
 
     def ret(self):
         # get return address from the top of the stack
+        print("RET:")
+        self.trace()
         address_to_pop_from = self.reg[self.sp]
         return_address = self.ram[address_to_pop_from]
         self.reg[self.sp] += 1
