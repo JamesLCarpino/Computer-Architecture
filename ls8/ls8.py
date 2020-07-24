@@ -11,5 +11,5 @@ cpu = CPU()
 
 cpu.load()
 cpu.run()
-# cpuCOPY.load("examples/print8.ls8")
+# cpuCOPY.load("examples/call.ls8")
 # cpuCOPY.run()

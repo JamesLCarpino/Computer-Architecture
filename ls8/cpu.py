@@ -11,6 +11,7 @@ POP = 0b01000110
 CALL = 0b01010000
 RET = 0b00010001
 ADD = 0b10100000
+CMP = 0b10100111
 
 
 class CPU:
@@ -28,6 +29,9 @@ class CPU:
         # later will set the initial value of the stack pointer
         self.sp = 7
         # branch table attampt
+        # flag does it need to be binary? Check later.
+        self.flag = 0b00000100
+
         self.branchtable = {}
         self.branchtable[HLT] = self.hlt
         self.branchtable[LDI] = self.ldi
@@ -38,6 +42,7 @@ class CPU:
         self.branchtable[CALL] = self.call
         self.branchtable[RET] = self.ret
         self.branchtable[ADD] = self.add
+        self.branchtable[CMP] = self.cmp_fun
 
     def load(self):
         """Load a program into memory."""
@@ -86,6 +91,21 @@ class CPU:
         elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
         # elif op == "SUB": etc
+        elif op == "CMP":
+            if self.reg[reg_a] < self.reg[reg_b]:
+                self.flag = 0b00000100  # E0
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.flag = 0b00000010
+            #                 `FL` bits: `00000LGE`
+            else:
+                self.flag = 0b00000001
+
+        # * `L` Less-than: during a `CMP`, set to 1 if registerA is less than registerB,
+        #   zero otherwise.
+        # * `G` Greater-than: during a `CMP`, set to 1 if registerA is greater than
+        #   registerB, zero otherwise.
+        # * `E` Equal: during a `CMP`, set to 1 if registerA is equal to registerB, zero
+        #   otherwise.
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -224,6 +244,22 @@ class CPU:
 
         # set the PC to the return addresss
         self.pc = return_address
+
+    def cmp_fun(self):
+        # cmp:
+        # This is an instruction handled by the ALU.*
+        # `CMP registerA registerB`
+        # Compare the values in two registers.
+        # * If they are equal, set the Equal `E` flag to 1, otherwise set it to 0.
+        # * If registerA is less than registerB, set the Less-than `L` flag to 1,
+        #   otherwise set it to 0.
+        # * If registerA is greater than registerB, set the Greater-than `G` flag
+        #   to 1, otherwise set it to 0.
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("CMP", operand_a, operand_b)
+
+        self.pc += 3
 
     def run(self):
         """Run the CPU."""
