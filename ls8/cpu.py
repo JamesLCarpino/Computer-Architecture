@@ -10,6 +10,20 @@ PUSH = 0b01000101
 POP = 0b01000110
 CALL = 0b01010000
 RET = 0b00010001
+ADD = 0b10100000
+# sprint goals:
+CMP = 0b10100111
+JMP = 0b01010100
+JNE = 0b01010110
+JEQ = 0b01010101
+# stretch problems
+AND = 0b10101000
+OR = 0b10101010
+NOT = 0b01101001
+XOR = 0b10101011
+SHL = 0b10101100
+SHR = 0b10101101
+MOD = 0b10100100
 
 
 class CPU:
@@ -27,6 +41,9 @@ class CPU:
         # later will set the initial value of the stack pointer
         self.sp = 7
         # branch table attampt
+        # flag does it need to be binary? Check later.
+        self.flag = 0b00000100
+
         self.branchtable = {}
         self.branchtable[HLT] = self.hlt
         self.branchtable[LDI] = self.ldi
@@ -36,6 +53,19 @@ class CPU:
         self.branchtable[POP] = self.pop
         self.branchtable[CALL] = self.call
         self.branchtable[RET] = self.ret
+        self.branchtable[ADD] = self.add
+        self.branchtable[CMP] = self.cmp_fun
+        self.branchtable[JMP] = self.jmp
+        self.branchtable[JNE] = self.jne
+        self.branchtable[JEQ] = self.jeq
+        # stretcher goal
+        self.branchtable[AND] = self.and_fun
+        self.branchtable[NOT] = self.not_fun
+        self.branchtable[OR] = self.or_fun
+        self.branchtable[XOR] = self.xor
+        self.branchtable[SHL] = self.shl
+        self.branchtable[SHR] = self.shr
+        self.branchtable[MOD] = self.mod
 
     def load(self):
         """Load a program into memory."""
@@ -84,6 +114,45 @@ class CPU:
         elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
         # elif op == "SUB": etc
+        elif op == "CMP":
+            if self.reg[reg_a] < self.reg[reg_b]:
+                self.flag = 0b00000100  # L1
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.flag = 0b00000010  # G1
+            #                 `FL` bits: `00000LGE`
+            else:
+                self.flag = 0b00000001  # E1
+
+        # * `L` Less-than: during a `CMP`, set to 1 if registerA is less than registerB,
+        #   zero otherwise.
+        # * `G` Greater-than: during a `CMP`, set to 1 if registerA is greater than
+        #   registerB, zero otherwise.
+        # * `E` Equal: during a `CMP`, set to 1 if registerA is equal to registerB, zero
+        #   otherwise.
+        elif op == "AND":
+            print("AND")
+            self.trace()
+            # bitwise AND the values in reg_a and reg_b into reg_a
+            anded = self.reg[reg_a] & self.reg[reg_b]
+            self.reg[reg_a] = anded
+        elif op == "OR":
+            orred = self.reg[reg_a] | self.reg[reg_b]
+            self.reg[reg_a] = orred
+
+        elif op == "NOT":
+            notted = ~self.reg[a]
+            self.reg[a] = notted
+
+        elif op == "XOR":
+            xored = self.reg[reg_a] ^ self.reg[reg_b]
+            self.reg[reg_a] = xored
+        elif op == "SHL":
+            self.reg[reg_a] << self.reg[reg_b]
+        elif op == "SHR":
+            self.reg[reg_a] >> self.reg[reg_b]
+        elif op == "MOD":
+            modded = self.reg[reg_a] / self.reg[reg_b]
+            self.reg[reg_a] = modded
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -150,6 +219,12 @@ class CPU:
         print(self.reg[opperand_a])
         self.pc += 2
 
+    def add(self):
+        opperand_a = self.ram[self.pc + 1]
+        opperand_b = self.ram[self.pc + 2]
+        self.alu("ADD", opperand_a, opperand_a)
+        self.pc += 3
+
     def mul(self):
         operand_a = self.ram[self.pc + 1]
         operand_b = self.ram[self.pc + 2]
@@ -190,8 +265,8 @@ class CPU:
 
     def call(self):
         # get the address of the next instruction
-        print("CALL:")
-        self.trace()
+        # print("CALL:")
+        # self.trace()
         return_address = self.pc + 2
         # push that onto the stack
         self.reg[self.sp] -= 1
@@ -203,17 +278,112 @@ class CPU:
         subroutine_address = self.reg[register_number]
 
         self.pc = subroutine_address
-        print("endCALL")
-        self.trace()
+        # print("endCALL")
+        # self.trace()
 
     def ret(self):
         # get return address from the top of the stack
+        # print("RET:")
+        # self.trace()
         address_to_pop_from = self.reg[self.sp]
         return_address = self.ram[address_to_pop_from]
         self.reg[self.sp] += 1
 
         # set the PC to the return addresss
         self.pc = return_address
+
+    def cmp_fun(self):
+        # cmp:
+        # This is an instruction handled by the ALU.*
+        # print("CMP:")
+        # self.trace()
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("CMP", operand_a, operand_b)
+        self.pc += 3
+        # self.trace()
+
+    def jmp(self):
+        self.trace()
+        self.pc += 1
+        given_reg = self.ram[self.pc]
+        jump = self.reg[given_reg]
+        self.pc = jump
+
+    # jump to the address stored in the given reg.
+    # set the pc to the address stored in the given reg
+
+    def jne(self):
+        self.pc += 1
+        given_reg = self.ram[self.pc]
+        jump_add = self.reg[given_reg]
+        if self.flag != 0b00000001:
+            self.pc = jump_add
+        else:
+            self.pc += 1
+
+    # if equal flag is clear (false, 0), jump to the address stored in the given reg
+
+    def jeq(self):
+        self.pc += 1
+        given_reg = self.ram[self.pc]
+        jump_add = self.reg[given_reg]
+        if self.flag == 0b00000001:
+            self.pc = jump_add
+        else:
+            self.pc += 1
+
+    # if equal flag is set true, jump to the address stored in the given reg
+
+    # AND` `OR` `XOR` `NOT` `SHL` `SHR` `MOD`
+    def and_fun(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    def or_fun(self):
+
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    #
+    def not_fun(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    #
+    def xor(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    #
+
+    def shl(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    #
+    def shr(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    #
+    def mod(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
 
     def run(self):
         """Run the CPU."""
