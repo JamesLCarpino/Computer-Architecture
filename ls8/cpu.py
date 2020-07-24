@@ -12,6 +12,9 @@ CALL = 0b01010000
 RET = 0b00010001
 ADD = 0b10100000
 CMP = 0b10100111
+JMP = 0b01010100
+JNE = 0b01010110
+JEQ = 0b01010101
 
 
 class CPU:
@@ -43,6 +46,9 @@ class CPU:
         self.branchtable[RET] = self.ret
         self.branchtable[ADD] = self.add
         self.branchtable[CMP] = self.cmp_fun
+        self.branchtable[JMP] = self.jmp
+        self.branchtable[JNE] = self.jne
+        self.branchtable[JEQ] = self.jeq
 
     def load(self):
         """Load a program into memory."""
@@ -93,12 +99,12 @@ class CPU:
         # elif op == "SUB": etc
         elif op == "CMP":
             if self.reg[reg_a] < self.reg[reg_b]:
-                self.flag = 0b00000100  # E0
+                self.flag = 0b00000100  # L1
             elif self.reg[reg_a] > self.reg[reg_b]:
-                self.flag = 0b00000010
+                self.flag = 0b00000010  # G1
             #                 `FL` bits: `00000LGE`
             else:
-                self.flag = 0b00000001
+                self.flag = 0b00000001  # E1
 
         # * `L` Less-than: during a `CMP`, set to 1 if registerA is less than registerB,
         #   zero otherwise.
@@ -248,18 +254,45 @@ class CPU:
     def cmp_fun(self):
         # cmp:
         # This is an instruction handled by the ALU.*
-        # `CMP registerA registerB`
-        # Compare the values in two registers.
-        # * If they are equal, set the Equal `E` flag to 1, otherwise set it to 0.
-        # * If registerA is less than registerB, set the Less-than `L` flag to 1,
-        #   otherwise set it to 0.
-        # * If registerA is greater than registerB, set the Greater-than `G` flag
-        #   to 1, otherwise set it to 0.
+        # print("CMP:")
+        # self.trace()
         operand_a = self.ram[self.pc + 1]
         operand_b = self.ram[self.pc + 2]
         self.alu("CMP", operand_a, operand_b)
-
         self.pc += 3
+        # self.trace()
+
+    def jmp(self):
+        self.trace()
+        self.pc += 1
+        given_reg = self.ram[self.pc]
+        jump = self.reg[given_reg]
+        self.pc = jump
+
+    # jump to the address stored in the given reg.
+    # set the pc to the address stored in the given reg
+
+    def jne(self):
+        self.pc += 1
+        given_reg = self.ram[self.pc]
+        jump_add = self.reg[given_reg]
+        if self.flag != 0b00000001:
+            self.pc = jump_add
+        else:
+            self.pc += 1
+
+    # if equal flag is clear (false, 0), jump to the address stored in the given reg
+
+    def jeq(self):
+        self.pc += 1
+        given_reg = self.ram[self.pc]
+        jump_add = self.reg[given_reg]
+        if self.flag == 0b00000001:
+            self.pc = jump_add
+        else:
+            self.pc += 1
+
+    # if equal flag is set true, jump to the address stored in the given reg
 
     def run(self):
         """Run the CPU."""
