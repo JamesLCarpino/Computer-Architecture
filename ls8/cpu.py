@@ -11,10 +11,19 @@ POP = 0b01000110
 CALL = 0b01010000
 RET = 0b00010001
 ADD = 0b10100000
+# sprint goals:
 CMP = 0b10100111
 JMP = 0b01010100
 JNE = 0b01010110
 JEQ = 0b01010101
+# stretch problems
+AND = 0b10101000
+OR = 0b10101010
+NOT = 0b01101001
+XOR = 0b10101011
+SHL = 0b10101100
+SHR = 0b10101101
+MOD = 0b10100100
 
 
 class CPU:
@@ -49,6 +58,14 @@ class CPU:
         self.branchtable[JMP] = self.jmp
         self.branchtable[JNE] = self.jne
         self.branchtable[JEQ] = self.jeq
+        # stretcher goal
+        self.branchtable[AND] = self.and_fun
+        self.branchtable[NOT] = self.not_fun
+        self.branchtable[OR] = self.or_fun
+        self.branchtable[XOR] = self.xor
+        self.branchtable[SHL] = self.shl
+        self.branchtable[SHR] = self.shr
+        self.branchtable[MOD] = self.mod
 
     def load(self):
         """Load a program into memory."""
@@ -112,6 +129,30 @@ class CPU:
         #   registerB, zero otherwise.
         # * `E` Equal: during a `CMP`, set to 1 if registerA is equal to registerB, zero
         #   otherwise.
+        elif op == "AND":
+            print("AND")
+            self.trace()
+            # bitwise AND the values in reg_a and reg_b into reg_a
+            anded = self.reg[reg_a] & self.reg[reg_b]
+            self.reg[reg_a] = anded
+        elif op == "OR":
+            orred = self.reg[reg_a] | self.reg[reg_b]
+            self.reg[reg_a] = orred
+
+        elif op == "NOT":
+            notted = ~self.reg[a]
+            self.reg[a] = notted
+
+        elif op == "XOR":
+            xored = self.reg[reg_a] ^ self.reg[reg_b]
+            self.reg[reg_a] = xored
+        elif op == "SHL":
+            self.reg[reg_a] << self.reg[reg_b]
+        elif op == "SHR":
+            self.reg[reg_a] >> self.reg[reg_b]
+        elif op == "MOD":
+            modded = self.reg[reg_a] / self.reg[reg_b]
+            self.reg[reg_a] = modded
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -293,6 +334,56 @@ class CPU:
             self.pc += 1
 
     # if equal flag is set true, jump to the address stored in the given reg
+
+    # AND` `OR` `XOR` `NOT` `SHL` `SHR` `MOD`
+    def and_fun(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    def or_fun(self):
+
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    #
+    def not_fun(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    #
+    def xor(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    #
+
+    def shl(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    #
+    def shr(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
+
+    #
+    def mod(self):
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+        self.alu("AND", operand_a, operand_b)
+        self.pc += 3
 
     def run(self):
         """Run the CPU."""
